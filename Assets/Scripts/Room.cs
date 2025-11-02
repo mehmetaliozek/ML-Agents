@@ -1,18 +1,17 @@
 using UnityEngine;
 
-public class Room:MonoBehaviour
+public class Room : MonoBehaviour
 {
-    [field: SerializeField]
-    public Transform Door { get; private set; }
+    [SerializeField]
+    private bool _isRandomRotation = false;
 
-    public bool IsPassedDoor { get; set; } = false;
+    public bool IsVisited { get; set; } = false;
 
-    public void SelfRandomRotate()
+    public void Rotate()
     {
-        transform.rotation = Quaternion.Euler(
-            0f,
-            90f * Random.Range(0, 3),
-            0f
-        );
+        if (_isRandomRotation)
+        {
+            transform.rotation = Quaternion.Euler(0f, Random.Range(0, 4) * 90f, 0f);
+        }
     }
 }

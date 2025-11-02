@@ -1,32 +1,59 @@
 {
-    "AgentX": {
+    "PathfinderAgent": {
         "checkpoints": [
             {
-                "steps": 499960,
-                "file_path": "results\\RunName_001\\AgentX\\AgentX-499960.onnx",
-                "reward": null,
-                "creation_time": 1750156925.1281314,
+                "steps": 499959,
+                "file_path": "results\\RunName_001\\PathfinderAgent\\PathfinderAgent-499959.onnx",
+                "reward": 0.09732222622605385,
+                "creation_time": 1755952758.7943485,
                 "auxillary_file_paths": [
-                    "results\\RunName_001\\AgentX\\AgentX-499960.pt"
+                    "results\\RunName_001\\PathfinderAgent\\PathfinderAgent-499959.pt"
                 ]
             },
             {
-                "steps": 632008,
-                "file_path": "results\\RunName_001\\AgentX\\AgentX-632008.onnx",
-                "reward": null,
-                "creation_time": 1750157243.1845217,
+                "steps": 999955,
+                "file_path": "results\\RunName_001\\PathfinderAgent\\PathfinderAgent-999955.onnx",
+                "reward": 0.6215150194708258,
+                "creation_time": 1755953936.146095,
                 "auxillary_file_paths": [
-                    "results\\RunName_001\\AgentX\\AgentX-632008.pt"
+                    "results\\RunName_001\\PathfinderAgent\\PathfinderAgent-999955.pt"
+                ]
+            },
+            {
+                "steps": 1499980,
+                "file_path": "results\\RunName_001\\PathfinderAgent\\PathfinderAgent-1499980.onnx",
+                "reward": 1.1860403985001449,
+                "creation_time": 1755955079.245565,
+                "auxillary_file_paths": [
+                    "results\\RunName_001\\PathfinderAgent\\PathfinderAgent-1499980.pt"
+                ]
+            },
+            {
+                "steps": 1999987,
+                "file_path": "results\\RunName_001\\PathfinderAgent\\PathfinderAgent-1999987.onnx",
+                "reward": 1.338473737594937,
+                "creation_time": 1755956370.490101,
+                "auxillary_file_paths": [
+                    "results\\RunName_001\\PathfinderAgent\\PathfinderAgent-1999987.pt"
+                ]
+            },
+            {
+                "steps": 2010717,
+                "file_path": "results\\RunName_001\\PathfinderAgent\\PathfinderAgent-2010717.onnx",
+                "reward": 1.2706795089305885,
+                "creation_time": 1755956396.627868,
+                "auxillary_file_paths": [
+                    "results\\RunName_001\\PathfinderAgent\\PathfinderAgent-2010717.pt"
                 ]
             }
         ],
         "final_checkpoint": {
-            "steps": 632008,
-            "file_path": "results\\RunName_001\\AgentX.onnx",
-            "reward": null,
-            "creation_time": 1750157243.1845217,
+            "steps": 2010717,
+            "file_path": "results\\RunName_001\\PathfinderAgent.onnx",
+            "reward": 1.2706795089305885,
+            "creation_time": 1755956396.627868,
             "auxillary_file_paths": [
-                "results\\RunName_001\\AgentX\\AgentX-632008.pt"
+                "results\\RunName_001\\PathfinderAgent\\PathfinderAgent-2010717.pt"
             ]
         }
     },

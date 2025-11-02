@@ -4,45 +4,66 @@ using UnityEngine;
 
 public class EnvironmentManager : MonoBehaviour
 {
-    [SerializeField] private GameObject spawnPoints;
-    [SerializeField] private GameObject roomsParent;
+    [SerializeField]
+    private Transform target;
+    public Transform Target => target;
 
-    private List<Transform> points;
-    private List<Room> rooms;
+    [SerializeField]
+    private Collider area;
+    private Bounds areaBounds;
+
+    [SerializeField]
+    private GameObject roomParent;
+    public List<Room> Rooms { get; private set; }
 
     public Room SelectedRoom { get; private set; }
 
+    [SerializeField]
+    private LayerMask obstacleLayer;
+
     private void Awake()
     {
-        rooms = roomsParent.GetComponentsInChildren<Room>().ToList();
-        points = spawnPoints.GetComponentsInChildren<Transform>().ToList();
+        areaBounds = area.bounds;
+        Rooms = roomParent.GetComponentsInChildren<Room>().ToList();
     }
 
-    public void RandomRotateRooms()
+    public void InitializeRooms()
     {
-        foreach (Room room in rooms)
+        foreach (var room in Rooms)
         {
-            room.SelfRandomRotate();
+            room.IsVisited = false;
+            room.Rotate();
         }
     }
 
-    public Vector3 GetAgentRandomPosition()
+    public void SelectRoom()
     {
-        return points[Random.Range(0, points.Count)].localPosition;
+        SelectedRoom = Rooms[Random.Range(0, Rooms.Count)];
     }
 
-    public Vector3 GetTargetRandomPosition()
+    public void SetTargetRandomPosition()
     {
-        SelectedRoom = rooms[Random.Range(0, rooms.Count)];
-
-        float rndX = SelectedRoom.transform.localPosition.x + Random.Range(-3f, 3f);
-        float rndZ = SelectedRoom.transform.localPosition.z + Random.Range(-3f, 3f);
-
-        return new Vector3(rndX, 0.5f, rndZ);
+        Vector3 roomCenter = SelectedRoom.transform.localPosition;
+        Vector3 randomPosition = roomCenter + new Vector3(Random.Range(-1f, 1f), 0.5f, Random.Range(-1f, 1f));
+        target.localPosition = randomPosition;
     }
 
-    public Vector3 GetDoorPosition()
+    public Vector3 GetRandomAgentPosition()
     {
-        return transform.InverseTransformPoint(SelectedRoom.Door.position);
+        Vector3 randomSpawnPos;
+        while (true)
+        {
+            var randomPosX = Random.Range(-areaBounds.extents.x, areaBounds.extents.x);
+            var randomPosZ = Random.Range(-areaBounds.extents.z, areaBounds.extents.z);
+            randomSpawnPos = area.transform.localPosition + new Vector3(randomPosX, 1f, randomPosZ);
+
+            if (!Physics.CheckSphere(randomSpawnPos, 2.0f, obstacleLayer)) break;
+        }
+        return randomSpawnPos;
+    }
+
+    public Quaternion GetRandomAgentRotation()
+    {
+        return Quaternion.Euler(0f, Random.Range(0, 360), 0f);
     }
 }

@@ -1,0 +1,40 @@
+default_settings: null
+behaviors:
+  PathfinderAgent:
+    trainer_type: ppo
+    hyperparameters:
+      batch_size: 1024
+      buffer_size: 10240
+      learning_rate: 0.0003
+      beta: 0.01
+      epsilon: 0.2
+      lambd: 0.95
+      num_epoch: 3
+      learning_rate_schedule: linear
+    checkpoint_interval: 500000
+    network_settings:
+      normalize: true
+      hidden_units: 256
+      num_layers: 3
+      vis_encode_type: simple
+    reward_signals:
+      extrinsic:
+        gamma: 0.99
+        strength: 1.0
+        network_settings:
+          normalize: true
+          hidden_units: 256
+          num_layers: 3
+          vis_encode_type: simple
+      curiosity:
+        gamma: 0.99
+        strength: 0.02
+        learning_rate: 0.0003
+        network_settings:
+          normalize: true
+          hidden_units: 128
+          num_layers: 2
+          vis_encode_type: simple
+    max_steps: 5000000
+    time_horizon: 128
+    summary_freq: 10000

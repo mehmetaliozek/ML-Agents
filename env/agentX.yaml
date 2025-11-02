@@ -1,9 +1,0 @@
-behaviors:
-  AgentX:
-    trainer_type: ppo
-    reward_signals:
-      extrinsic:
-        network_settings:
-          hidden_units: 256
-          vis_encode_type: resnet
-    max_steps: 1000000000

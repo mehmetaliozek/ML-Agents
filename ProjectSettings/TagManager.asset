@@ -9,6 +9,7 @@ TagManager:
   - Room
   - Target
   - Agent
+  - Ground
   layers:
   - Default
   - TransparentFX
@@ -16,10 +17,10 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
+  - Wall
+  - Room
+  - Door
+  - Agent
   - 
   - 
   - 
