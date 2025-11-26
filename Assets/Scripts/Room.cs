@@ -7,11 +7,24 @@ public class Room : MonoBehaviour
 
     public bool IsVisited { get; set; } = false;
 
-    public void Rotate()
+    private void Rotate()
     {
         if (_isRandomRotation)
         {
             transform.rotation = Quaternion.Euler(0f, Random.Range(0, 4) * 90f, 0f);
         }
+    }
+
+    public void Initialize()
+    {
+        Rotate();
+        IsVisited = false;
+        gameObject.tag = Tags.Room;
+    }
+
+    public void MarkAsVisited()
+    {
+        IsVisited = true;
+        gameObject.tag = Tags.Visited;
     }
 }

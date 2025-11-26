@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class EnvironmentManager : MonoBehaviour
 {
+
     [SerializeField]
     private Transform target;
     public Transform Target => target;
@@ -31,14 +32,19 @@ public class EnvironmentManager : MonoBehaviour
     {
         foreach (var room in Rooms)
         {
-            room.IsVisited = false;
-            room.Rotate();
+            room.Initialize();
         }
     }
 
     public void SelectRoom()
     {
         SelectedRoom = Rooms[Random.Range(0, Rooms.Count)];
+    }
+
+    public void SelectRoom(Vector3 center, float radius)
+    {
+        var nearbyRooms = Rooms.Where(r => Vector3.Distance(r.transform.localPosition, center) <= radius).ToList();
+        SelectedRoom = nearbyRooms[Random.Range(0, nearbyRooms.Count)];
     }
 
     public void SetTargetRandomPosition()

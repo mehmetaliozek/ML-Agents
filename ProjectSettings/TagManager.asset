@@ -10,6 +10,7 @@ TagManager:
   - Target
   - Agent
   - Ground
+  - Visited
   layers:
   - Default
   - TransparentFX

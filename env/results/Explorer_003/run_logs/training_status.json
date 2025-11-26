@@ -1,0 +1,65 @@
+{
+    "PathfinderAgent": {
+        "checkpoints": [
+            {
+                "steps": 1499872,
+                "file_path": "results\\Explorer_003\\PathfinderAgent\\PathfinderAgent-1499872.onnx",
+                "reward": 3.7100998376097,
+                "creation_time": 1763894143.3445115,
+                "auxillary_file_paths": [
+                    "results\\Explorer_003\\PathfinderAgent\\PathfinderAgent-1499872.pt"
+                ]
+            },
+            {
+                "steps": 1999872,
+                "file_path": "results\\Explorer_003\\PathfinderAgent\\PathfinderAgent-1999872.onnx",
+                "reward": null,
+                "creation_time": 1763897177.5656419,
+                "auxillary_file_paths": [
+                    "results\\Explorer_003\\PathfinderAgent\\PathfinderAgent-1999872.pt"
+                ]
+            },
+            {
+                "steps": 2499951,
+                "file_path": "results\\Explorer_003\\PathfinderAgent\\PathfinderAgent-2499951.onnx",
+                "reward": 3.132474992889911,
+                "creation_time": 1763900323.8605137,
+                "auxillary_file_paths": [
+                    "results\\Explorer_003\\PathfinderAgent\\PathfinderAgent-2499951.pt"
+                ]
+            },
+            {
+                "steps": 2999994,
+                "file_path": "results\\Explorer_003\\PathfinderAgent\\PathfinderAgent-2999994.onnx",
+                "reward": null,
+                "creation_time": 1763903501.4834487,
+                "auxillary_file_paths": [
+                    "results\\Explorer_003\\PathfinderAgent\\PathfinderAgent-2999994.pt"
+                ]
+            },
+            {
+                "steps": 3340798,
+                "file_path": "results\\Explorer_003\\PathfinderAgent\\PathfinderAgent-3340798.onnx",
+                "reward": 4.078399924561381,
+                "creation_time": 1763926392.0545142,
+                "auxillary_file_paths": [
+                    "results\\Explorer_003\\PathfinderAgent\\PathfinderAgent-3340798.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 3340798,
+            "file_path": "results\\Explorer_003\\PathfinderAgent.onnx",
+            "reward": 4.078399924561381,
+            "creation_time": 1763926392.0545142,
+            "auxillary_file_paths": [
+                "results\\Explorer_003\\PathfinderAgent\\PathfinderAgent-3340798.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.5.1+cu121"
+    }
+}
