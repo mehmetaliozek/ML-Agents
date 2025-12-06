@@ -31,11 +31,13 @@ public class PathfinderAgentV3 : Agent
     public float revisitWrongRoomPenalty = -0.2f;
     [Tooltip("Yeni (ama yanlýþ) bir odayý ilk kez keþfetme ödülü.")]
     public float discoverNewRoomReward = 0.1f;
+    [Tooltip("duvarda sürünmeye devam ettikçe vereceðimiz ceza")]
+    public float wallStayPenalty = -0.01f;
 
     private Rigidbody agentRb;
-    private bool isTargetRoomFound;
+    //private bool isTargetRoomFound; //artýk bulunduðunda EnvironmentManager'a bildiriyoruz, böylece multi-agent senaryosunda diðer ajanlar da ödül alabilir
     private bool isInRoom = false;
-    private bool isRevisited = false;
+    //private bool isRevisited = false; // Room.cs içindeki IsVisited'dan okuduðumuz için gerekli olmayabilir
     private Room visitedRoom;
 
     public override void Initialize()
@@ -45,19 +47,33 @@ public class PathfinderAgentV3 : Agent
 
     public override void OnEpisodeBegin()
     {
-        EnvironmentManager.InitializeRooms();
-        EnvironmentManager.SelectRoom();
-        EnvironmentManager.SetTargetRandomPosition();
+        //Episode iþlemleri bizim kontrolümüzde olsun, ml agentsdan çýkaralým diye sildim artýk Manager çaðýracak, OnGroupEpisodeBegin bak
 
+        //EnvironmentManager.InitializeRooms();
+        //EnvironmentManager.SelectRoom();
+        //EnvironmentManager.SetTargetRandomPosition();
+
+        //agentRb.linearVelocity = Vector3.zero;
+        //agentRb.angularVelocity = Vector3.zero;
+
+        //transform.SetLocalPositionAndRotation(EnvironmentManager.GetRandomAgentPosition(), EnvironmentManager.GetRandomAgentRotation());
+
+        //isTargetRoomFound = false;
+        //isInRoom = false;
+        //isRevisited = false;
+        //visitedRoom = null;
+    }
+
+    public void OnGroupEpisodeBegin()
+    {
         agentRb.linearVelocity = Vector3.zero;
         agentRb.angularVelocity = Vector3.zero;
 
         transform.SetLocalPositionAndRotation(EnvironmentManager.GetRandomAgentPosition(), EnvironmentManager.GetRandomAgentRotation());
 
-        isTargetRoomFound = false;
         isInRoom = false;
-        isRevisited = false;
         visitedRoom = null;
+
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -65,9 +81,19 @@ public class PathfinderAgentV3 : Agent
         sensor.AddObservation(transform.InverseTransformDirection(agentRb.linearVelocity));
         sensor.AddObservation(agentRb.angularVelocity.y);
 
-        sensor.AddObservation(isTargetRoomFound);
+        //sensor.AddObservation(isTargetRoomFound);
+        //sensor.AddObservation(isRevisited);
+
         sensor.AddObservation(isInRoom);
-        sensor.AddObservation(isRevisited);
+
+        if (visitedRoom != null)
+        {
+            sensor.AddObservation(visitedRoom.IsVisited);
+        }
+        else
+        {
+            sensor.AddObservation(false);
+        }
     }
 
     public override void OnActionReceived(ActionBuffers actions)
@@ -108,19 +134,32 @@ public class PathfinderAgentV3 : Agent
     {
         if (collision.gameObject.CompareTag(Tags.Target))
         {
-            AddReward(reachTargetReward);
-            EndEpisode();
+            //AddReward(reachTargetReward);
+            //EndEpisode();
+            //Ödüller artýk environment manager tarafýndan veriliyor
+
+            EnvironmentManager.NotifyTargetFound(this);
+
         }
         else if (collision.gameObject.CompareTag(Tags.Wall))
         {
             AddReward(hitWallPenalty);
-            EndEpisode();
+            //EndEpisode();
+            //direkt bitirmek yerine öyle kaldýklarýnda ceza verelim sürünmesinler duvarlarda diye
+        }
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        if(collision.gameObject.CompareTag(Tags.Wall))
+        {
+            AddReward(wallStayPenalty);
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag(Tags.Room))
+        if (other.gameObject.CompareTag(Tags.Room) || other.gameObject.CompareTag(Tags.Visited))
         {
             if (other.TryGetComponent(out Room room))
             {
@@ -129,23 +168,19 @@ public class PathfinderAgentV3 : Agent
 
                 if (room == EnvironmentManager.SelectedRoom)
                 {
-                    if (!isTargetRoomFound)
-                    {
-                        AddReward(foundCorrectRoomReward);
-                        isTargetRoomFound = true;
-                    }
+                    AddReward(discoverNewRoomReward * 2);
                 }
                 else
                 {
                     if (room.IsVisited)
                     {
                         AddReward(revisitWrongRoomPenalty);
-                        isRevisited = true;
                     }
                     else
                     {
+                        room.MarkAsVisited();
+                        EnvironmentManager.NotifyNewRoomExplored(this);
                         AddReward(discoverNewRoomReward);
-                        room.IsVisited = true;
                     }
                 }
             }
@@ -154,14 +189,14 @@ public class PathfinderAgentV3 : Agent
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.gameObject.CompareTag(Tags.Room))
+        if (other.gameObject.CompareTag(Tags.Room) || other.gameObject.CompareTag(Tags.Visited))
         {
             Room room = other.GetComponent<Room>();
             if (room == visitedRoom)
             {
                 isInRoom = false;
-                isRevisited = false;
                 visitedRoom = null;
+
                 if (room != EnvironmentManager.SelectedRoom)
                 {
                     room.MarkAsVisited();
