@@ -46,7 +46,7 @@ public class PathfinderAgentV3 : Agent
     public override void OnEpisodeBegin()
     {
         EnvironmentManager.InitializeRooms();
-        EnvironmentManager.SelectRoom();
+        //EnvironmentManager.SelectRoom();
         EnvironmentManager.SetTargetRandomPosition();
 
         agentRb.linearVelocity = Vector3.zero;

@@ -51,7 +51,7 @@ public class PathfinderAgentV2 : Agent
         agentRb.angularVelocity = Vector3.zero;
 
         transform.SetLocalPositionAndRotation(EnvironmentManager.GetRandomAgentPosition(), EnvironmentManager.GetRandomAgentRotation());
-        EnvironmentManager.SelectRoom(transform.localPosition, Random.Range(15, 20));
+        //EnvironmentManager.SelectRoom(transform.localPosition, Random.Range(15, 20));
         EnvironmentManager.SetTargetRandomPosition();
 
         isTargetRoomFound = false;

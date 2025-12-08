@@ -4,28 +4,32 @@ using UnityEngine;
 
 public class EnvironmentManager : MonoBehaviour
 {
-
+    [Header("References")]
+    [field: SerializeField]
+    public MultiAgentGroup MultiAgentGroup { get; private set; }
     [SerializeField]
     private Transform target;
-    public Transform Target => target;
-
     [SerializeField]
     private Collider area;
-    private Bounds areaBounds;
-
     [SerializeField]
     private GameObject roomParent;
-    public List<Room> Rooms { get; private set; }
-
-    public Room SelectedRoom { get; private set; }
-
     [SerializeField]
     private LayerMask obstacleLayer;
 
+    public Transform Target => target;
+    public List<Room> Rooms { get; private set; }
+    public Room SelectedRoom { get; private set; }
+
+    private Bounds areaBounds;
+    private const int MAX_SPAWN_ATTEMPTS = 100;
+
     private void Awake()
     {
-        areaBounds = area.bounds;
+        if (area != null) areaBounds = area.bounds;
+
         Rooms = roomParent.GetComponentsInChildren<Room>().ToList();
+            
+        InitializeRooms();
     }
 
     public void InitializeRooms()
@@ -36,40 +40,53 @@ public class EnvironmentManager : MonoBehaviour
         }
     }
 
-    public void SelectRoom()
+    public void ResetEnvironment()
     {
-        SelectedRoom = Rooms[Random.Range(0, Rooms.Count)];
+        InitializeRooms();
+        SelectRandomRoom();
+        SetTargetRandomPosition();
     }
 
-    public void SelectRoom(Vector3 center, float radius)
+    public void SelectRandomRoom()
     {
-        var nearbyRooms = Rooms.Where(r => Vector3.Distance(r.transform.localPosition, center) <= radius).ToList();
-        SelectedRoom = nearbyRooms[Random.Range(0, nearbyRooms.Count)];
+        if (Rooms.Count == 0) return;
+        SelectedRoom = Rooms[Random.Range(0, Rooms.Count)];
     }
 
     public void SetTargetRandomPosition()
     {
+        if (SelectedRoom == null) return;
+
         Vector3 roomCenter = SelectedRoom.transform.localPosition;
-        Vector3 randomPosition = roomCenter + new Vector3(Random.Range(-1f, 1f), 0.5f, Random.Range(-1f, 1f));
-        target.localPosition = randomPosition;
+        Vector3 randomOffset = new Vector3(Random.Range(-1f, 1f), 0.5f, Random.Range(-1f, 1f));
+        target.localPosition = roomCenter + randomOffset;
     }
 
     public Vector3 GetRandomAgentPosition()
     {
         Vector3 randomSpawnPos;
-        while (true)
+        int attempts = 0;
+
+        while (attempts < MAX_SPAWN_ATTEMPTS)
         {
+            attempts++;
             var randomPosX = Random.Range(-areaBounds.extents.x, areaBounds.extents.x);
             var randomPosZ = Random.Range(-areaBounds.extents.z, areaBounds.extents.z);
+
             randomSpawnPos = area.transform.localPosition + new Vector3(randomPosX, 1f, randomPosZ);
 
-            if (!Physics.CheckSphere(randomSpawnPos, 2.0f, obstacleLayer)) break;
+            if (!Physics.CheckSphere(randomSpawnPos, 1.0f, obstacleLayer))
+            {
+                return randomSpawnPos;
+            }
         }
-        return randomSpawnPos;
+
+        Debug.LogWarning("Uygun spawn noktasý bulunamadý, varsayýlan nokta kullanýlýyor.");
+        return area.transform.localPosition + Vector3.up;
     }
 
     public Quaternion GetRandomAgentRotation()
     {
-        return Quaternion.Euler(0f, Random.Range(0, 360), 0f);
+        return Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
     }
 }
