@@ -6,7 +6,7 @@ public class MultiAgentGroup : MonoBehaviour
 {
     [Header("Dependencies")]
     [SerializeField]
-    private EnvironmentManager environmentManager;
+    private EnvironmentManagerV2 environmentManager;
     [SerializeField]
     private List<MultiAgent> agents;
 

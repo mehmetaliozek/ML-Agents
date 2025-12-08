@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Unity.MLAgents; //Multi-Agent Learning için gerekli
 
 public class EnvironmentManager : MonoBehaviour
 {
-    [Header("References")]
-    [field: SerializeField]
-    public MultiAgentGroup MultiAgentGroup { get; private set; }
+
+    private SimpleMultiAgentGroup m_AgentGroup;
+
     [SerializeField]
     private Transform target;
     [SerializeField]
@@ -23,13 +24,51 @@ public class EnvironmentManager : MonoBehaviour
     private Bounds areaBounds;
     private const int MAX_SPAWN_ATTEMPTS = 100;
 
+    [SerializeField] 
+    private List<PathfinderAgentV3> agents; //ajanlarý multiAgent grubuna eklemek için editörden atama yapcaz
+
     private void Awake()
     {
-        if (area != null) areaBounds = area.bounds;
+        m_AgentGroup = new SimpleMultiAgentGroup(); //Multiagent grubunu oluþturuyorum
 
+        areaBounds = area.bounds;
         Rooms = roomParent.GetComponentsInChildren<Room>().ToList();
             
         InitializeRooms();
+    }
+
+    private void Start()
+    {
+        foreach (var agent in agents)
+        {
+            m_AgentGroup.RegisterAgent(agent); //ajanlarý multiAgent grubuna ekliyorum
+        }
+
+        ResetScene(); //Sahneyi baþlatýrken resetleme-kurulum için
+    }
+
+    public void ResetScene()
+    {
+        InitializeRooms();
+        //SelectRoom();
+        SetTargetRandomPosition();
+
+        foreach(var agent in agents)
+        {
+            agent.OnEpisodeBegin(); //Her ajan için episode baþlangýcý, senkronizasyon sorunu yaþamamak için
+        }
+    }
+
+    public void NotifyTargetFound(PathfinderAgentV3 agent)
+    {
+        m_AgentGroup.AddGroupReward(agent.reachTargetReward); //Tüm ajanlara ödül ver
+        m_AgentGroup.EndGroupEpisode(); //Tüm ajanlarýn bölümünü sonlandýr
+        ResetScene(); //Sahneyi sýfýrla
+    }
+
+    public void NotifyNewRoomExplored(PathfinderAgentV3 agent)
+    {
+        m_AgentGroup.AddGroupReward(agent.discoverNewRoomReward);
     }
 
     public void InitializeRooms()

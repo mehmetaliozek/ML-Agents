@@ -7,7 +7,7 @@ using UnityEngine;
 public class MultiAgent : Agent
 {
     [Header("References")]
-    [SerializeField] private EnvironmentManager envManager;
+    [SerializeField] private EnvironmentManagerV2 envManager;
 
     [Header("Movement Settings")]
     [SerializeField] private float agentMoveSpeed = 10f;
