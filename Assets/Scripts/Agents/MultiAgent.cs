@@ -2,16 +2,21 @@ using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
+using UnityEngine.AI;
 
 [RequireComponent(typeof(Rigidbody))]
 public class MultiAgent : Agent
 {
     [Header("References")]
     [SerializeField] private EnvironmentManagerV2 envManager;
+    [SerializeField] private NavMeshAgent navMeshAgent;
+    [SerializeField] private NavMeshObstacle navMeshObstacle;
 
     [Header("Movement Settings")]
     [SerializeField] private float agentMoveSpeed = 10f;
     [SerializeField] private float agentRotateSpeed = 2.5f;
+    [SerializeField] private float travelSpeed = 12f;
+    [SerializeField] private float stopDistance = 3.5f;
 
     [Header("Reward Settings")]
     [SerializeField] private float reachTargetReward = 1.0f;
@@ -32,34 +37,90 @@ public class MultiAgent : Agent
     private int _exploredRoomCounter;
     private Vector3 _startPosition;
 
-    private void Start()
-    {
+    private bool _isTravelingToStartPoint = false;
+    private Vector3 _travelTargetPosition;
+
+    protected override void Awake() 
+    { 
+        base.Awake();
+        _rb = GetComponent<Rigidbody>();
         _startPosition = transform.localPosition;
+
+        navMeshAgent.updatePosition = false;
+        navMeshAgent.updateRotation = false;
+        navMeshAgent.updateUpAxis = false;
     }
 
-    public override void Initialize()
+    private void FixedUpdate()
     {
-        _rb = GetComponent<Rigidbody>();
+        if (navMeshAgent.enabled)
+        {
+            navMeshAgent.nextPosition = transform.position;
+        }
+
+        if (_isTravelingToStartPoint)
+        {
+            HandleTravelMovement();
+        }
+    }
+
+    private void HandleTravelMovement()
+    {
+        if (!navMeshAgent.isOnNavMesh) return;
+
+        float distance = Vector3.Distance(transform.position, _travelTargetPosition);
+        if (distance <= stopDistance)
+        {
+            StartTrainingPhase();
+            return;
+        }
+
+        Vector3 dir = (navMeshAgent.steeringTarget - transform.position).normalized;
+
+        dir.y = 0;
+        dir.Normalize();
+
+        Vector3 targetVelocity = dir * travelSpeed;
+        _rb.linearVelocity = new Vector3(targetVelocity.x, _rb.linearVelocity.y, targetVelocity.z);
+
+        if (dir != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(dir);
+            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.fixedDeltaTime * 5f);
+        }
+    }
+
+    private void StartTrainingPhase()
+    {
+        _isTravelingToStartPoint = false;
+        navMeshAgent.enabled = false;
+        navMeshObstacle.enabled = true;
+
+        _rb.linearVelocity = Vector3.zero;
+        _rb.angularVelocity = Vector3.zero;
     }
 
     public override void OnEpisodeBegin()
     {
-        StopMovement();
-
-        transform.localRotation = envManager.GetRandomAgentRotation();
-
-        _isTargetRoomFound = false;
-        _isInRoom = false;
-        _isRevisited = false;
-        _currentRoom = null;
-        _exploredRoomCounter = 0;
+        // Normalde burasý her resetlendiðinde çalýþýr. 
+        // Ancak bu senaryoda "Reset" mantýðýný MultiAgentGroup yönetiyor.
+        // Ajan kendi kendine reset atmamalý, grup onu resetlemeli.
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
+        if (_isTravelingToStartPoint)
+        {
+            sensor.AddObservation(Vector3.zero);
+            sensor.AddObservation(0f);
+            sensor.AddObservation(false);
+            sensor.AddObservation(false);
+            sensor.AddObservation(false);
+            return;
+        }
+
         sensor.AddObservation(transform.InverseTransformDirection(_rb.linearVelocity));
         sensor.AddObservation(_rb.angularVelocity.y);
-
         sensor.AddObservation(_isTargetRoomFound);
         sensor.AddObservation(_isInRoom);
         sensor.AddObservation(_isRevisited);
@@ -67,9 +128,10 @@ public class MultiAgent : Agent
 
     public override void OnActionReceived(ActionBuffers actions)
     {
-        MoveAgent(actions);
+        if (_isTravelingToStartPoint) return;
 
-        AddReward(stepPenalty / MaxStep);
+        MoveAgent(actions);
+        AddReward(stepPenalty/MaxStep);
     }
 
     private void MoveAgent(ActionBuffers actions)
@@ -84,6 +146,46 @@ public class MultiAgent : Agent
         _rb.angularVelocity = rotation;
     }
 
+
+    public void ResetAgentFull()
+    {
+        _rb.linearVelocity = Vector3.zero;
+        _rb.angularVelocity = Vector3.zero;
+        transform.localPosition = _startPosition;
+        transform.rotation = Quaternion.identity;
+
+        _exploredRoomCounter = 0;
+        _isTargetRoomFound = false;
+        _isInRoom = false;
+        _isRevisited = false;
+        _currentRoom = null;
+
+        navMeshAgent.enabled = false;
+        navMeshObstacle.enabled = true;
+        this.enabled = false;
+    }
+
+    public void ActivateAndTravelTo(Vector3 targetPos)
+    {
+        this.enabled = true;
+        navMeshObstacle.enabled = false;
+        navMeshAgent.enabled = true;
+
+        _travelTargetPosition = targetPos;
+        navMeshAgent.SetDestination(_travelTargetPosition);
+        _isTravelingToStartPoint = true;
+    }
+
+    public void ActivateDirectly()
+    {
+        this.enabled = true;
+        navMeshObstacle.enabled = true;
+        navMeshAgent.enabled = false;
+        _isTravelingToStartPoint = false;
+
+        transform.localRotation = envManager.GetRandomAgentRotation();
+    }
+
     public void StopMovement()
     {
         if (_rb != null)
@@ -93,15 +195,10 @@ public class MultiAgent : Agent
         }
     }
 
-    public void ResetAgent()
-    {
-        transform.localPosition = _startPosition;
-        _exploredRoomCounter = 0;
-        enabled = false;
-    }
-
     public override void Heuristic(in ActionBuffers actionsOut)
     {
+        if (_isTravelingToStartPoint) return;
+
         var continuousActions = actionsOut.ContinuousActions;
         continuousActions.Clear();
 
@@ -121,19 +218,19 @@ public class MultiAgent : Agent
         else if (collision.gameObject.CompareTag(Tags.Wall) || collision.gameObject.CompareTag(Tags.Agent))
         {
             envManager.MultiAgentGroup.AddGroupReward(hitWallPenalty);
-            AddReward(hitWallPenalty);    
+            AddReward(hitWallPenalty);
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag(Tags.Room)) return;
+        if (_isTravelingToStartPoint) return;
 
+        if (!other.CompareTag(Tags.Room)) return;
         if (other.TryGetComponent(out Room room))
         {
             _isInRoom = true;
             _currentRoom = room;
-
             HandleRoomLogic(room);
         }
     }
@@ -160,8 +257,6 @@ public class MultiAgent : Agent
             {
                 envManager.MultiAgentGroup.AddGroupReward(foundCorrectRoomReward);
                 AddReward(discoverNewRoomReward);
-
-                room.IsVisited = true;
                 _exploredRoomCounter++;
             }
         }
@@ -169,6 +264,8 @@ public class MultiAgent : Agent
 
     private void OnTriggerExit(Collider other)
     {
+        if (_isTravelingToStartPoint) return;
+
         if (!other.CompareTag(Tags.Room)) return;
 
         if (other.TryGetComponent(out Room room) && room == _currentRoom)

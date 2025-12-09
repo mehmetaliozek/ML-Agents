@@ -722,7 +722,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6766617407115898945, guid: 47ab2a5b40d29734499e7b0971b3f7c4, type: 3}
       propertyPath: m_Name
-      value: PathfinderAgent_Multi (3)
+      value: MultiAgent
       objectReference: {fileID: 0}
     - target: {fileID: 6766617407115898945, guid: 47ab2a5b40d29734499e7b0971b3f7c4, type: 3}
       propertyPath: m_IsActive
@@ -2509,6 +2509,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7090547600854047206}
     m_Modifications:
+    - target: {fileID: 2931170190172315343, guid: 47ab2a5b40d29734499e7b0971b3f7c4, type: 3}
+      propertyPath: m_Speed
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2931170190172315343, guid: 47ab2a5b40d29734499e7b0971b3f7c4, type: 3}
+      propertyPath: m_StoppingDistance
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 3159714945431880570, guid: 47ab2a5b40d29734499e7b0971b3f7c4, type: 3}
       propertyPath: envManager
       value: 
@@ -2555,7 +2563,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6766617407115898945, guid: 47ab2a5b40d29734499e7b0971b3f7c4, type: 3}
       propertyPath: m_Name
-      value: PathfinderAgent_Multi (1)
+      value: MultiAgent
       objectReference: {fileID: 0}
     - target: {fileID: 6766617407115898945, guid: 47ab2a5b40d29734499e7b0971b3f7c4, type: 3}
       propertyPath: m_IsActive
@@ -2640,7 +2648,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6766617407115898945, guid: 47ab2a5b40d29734499e7b0971b3f7c4, type: 3}
       propertyPath: m_Name
-      value: PathfinderAgent_Multi
+      value: MultiAgent
       objectReference: {fileID: 0}
     - target: {fileID: 6766617407115898945, guid: 47ab2a5b40d29734499e7b0971b3f7c4, type: 3}
       propertyPath: m_IsActive
@@ -3403,7 +3411,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6766617407115898945, guid: 47ab2a5b40d29734499e7b0971b3f7c4, type: 3}
       propertyPath: m_Name
-      value: PathfinderAgent_Multi (2)
+      value: MultiAgent
       objectReference: {fileID: 0}
     - target: {fileID: 6766617407115898945, guid: 47ab2a5b40d29734499e7b0971b3f7c4, type: 3}
       propertyPath: m_IsActive

@@ -24,7 +24,7 @@ public class Room : MonoBehaviour
 
     public void MarkAsVisited()
     {
-        if(IsVisited) return; // 2 defa marklamasýný engellemek için koydum
+        //if(IsVisited) return; // 2 defa marklamasýný engellemek için koydum
 
         IsVisited = true;
         gameObject.tag = Tags.Visited;

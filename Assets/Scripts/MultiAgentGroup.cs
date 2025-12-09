@@ -12,6 +12,7 @@ public class MultiAgentGroup : MonoBehaviour
 
     private SimpleMultiAgentGroup _mlAgentGroup;
     private int _currentAgentIndex = -1;
+    private Vector3 _lastStopPosition;
 
     private void Start()
     {
@@ -20,7 +21,7 @@ public class MultiAgentGroup : MonoBehaviour
         foreach (var agent in agents)
         {
             _mlAgentGroup.RegisterAgent(agent);
-            agent.enabled = false;
+            agent.ResetAgentFull();
         }
 
         ResetGroupEpisode();
@@ -41,22 +42,46 @@ public class MultiAgentGroup : MonoBehaviour
     {
         if (_currentAgentIndex != -1 && _currentAgentIndex < agents.Count)
         {
-            agents[_currentAgentIndex].StopMovement();
-            agents[_currentAgentIndex].enabled = false;
+            var currentAgent = agents[_currentAgentIndex];
+            _lastStopPosition = currentAgent.transform.position;
+
+            currentAgent.StopMovement();
+            currentAgent.enabled = false;
         }
 
-        _currentAgentIndex = (_currentAgentIndex + 1) % agents.Count;
+        _currentAgentIndex = (_currentAgentIndex + 1);
+
+        if (_currentAgentIndex >= agents.Count)
+        {
+            _currentAgentIndex = 0;
+            //EndGroupEpisode();
+            //return;
+        }
 
         var nextAgent = agents[_currentAgentIndex];
-        nextAgent.enabled = true;
+
+        if (_currentAgentIndex == 0)
+        {
+            if (_lastStopPosition == Vector3.zero)
+            {
+                nextAgent.ActivateDirectly();
+                return;
+            }
+            nextAgent.ActivateAndTravelTo(_lastStopPosition);
+        }
+        else
+        {
+            nextAgent.ActivateAndTravelTo(_lastStopPosition);
+        }
     }
 
     private void ResetGroupEpisode()
-    {environmentManager.ResetEnvironment();
+    {
+        environmentManager.ResetEnvironment();
 
         foreach (var agent in agents)
         {
-            agent.ResetAgent();
+            agent.ResetAgentFull();
         }
 
         _currentAgentIndex = -1;
