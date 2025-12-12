@@ -13,6 +13,7 @@ public class MultiAgentGroup : MonoBehaviour
     private SimpleMultiAgentGroup _mlAgentGroup;
     private int _currentAgentIndex = -1;
     private Vector3 _lastStopPosition;
+    private Quaternion _lastStopRotation;
 
     private void Start()
     {
@@ -44,6 +45,7 @@ public class MultiAgentGroup : MonoBehaviour
         {
             var currentAgent = agents[_currentAgentIndex];
             _lastStopPosition = currentAgent.transform.position;
+            _lastStopRotation = currentAgent.transform.rotation;
 
             currentAgent.StopMovement();
             currentAgent.enabled = false;
@@ -67,11 +69,11 @@ public class MultiAgentGroup : MonoBehaviour
                 nextAgent.ActivateDirectly();
                 return;
             }
-            nextAgent.ActivateAndTravelTo(_lastStopPosition);
+            nextAgent.ActivateAndTravelTo(_lastStopPosition,_lastStopRotation);
         }
         else
         {
-            nextAgent.ActivateAndTravelTo(_lastStopPosition);
+            nextAgent.ActivateAndTravelTo(_lastStopPosition, _lastStopRotation);
         }
     }
 
@@ -85,6 +87,8 @@ public class MultiAgentGroup : MonoBehaviour
         }
 
         _currentAgentIndex = -1;
+        _lastStopPosition = Vector3.zero;
+        _lastStopRotation= Quaternion.identity;
 
         NextAgent();
     }

@@ -39,6 +39,7 @@ public class MultiAgent : Agent
 
     private bool _isTravelingToStartPoint = false;
     private Vector3 _travelTargetPosition;
+    private Quaternion _travelTargetRotation;
 
     protected override void Awake() 
     { 
@@ -92,12 +93,14 @@ public class MultiAgent : Agent
 
     private void StartTrainingPhase()
     {
+        _rb.linearVelocity = Vector3.zero;
+        _rb.angularVelocity = Vector3.zero;
+
+        transform.rotation = _travelTargetRotation;
+
         _isTravelingToStartPoint = false;
         navMeshAgent.enabled = false;
         navMeshObstacle.enabled = true;
-
-        _rb.linearVelocity = Vector3.zero;
-        _rb.angularVelocity = Vector3.zero;
     }
 
     public override void OnEpisodeBegin()
@@ -159,13 +162,16 @@ public class MultiAgent : Agent
         _isInRoom = false;
         _isRevisited = false;
         _currentRoom = null;
+        _isTravelingToStartPoint = false;
+        _travelTargetPosition = Vector3.zero;
+        _travelTargetRotation = Quaternion.identity;
 
         navMeshAgent.enabled = false;
         navMeshObstacle.enabled = true;
         this.enabled = false;
     }
 
-    public void ActivateAndTravelTo(Vector3 targetPos)
+    public void ActivateAndTravelTo(Vector3 targetPos, Quaternion rotation)
     {
         this.enabled = true;
         navMeshObstacle.enabled = false;
@@ -173,6 +179,7 @@ public class MultiAgent : Agent
 
         _travelTargetPosition = targetPos;
         navMeshAgent.SetDestination(_travelTargetPosition);
+        _travelTargetRotation = rotation;
         _isTravelingToStartPoint = true;
     }
 
