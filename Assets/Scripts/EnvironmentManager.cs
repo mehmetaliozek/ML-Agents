@@ -5,52 +5,53 @@ using Unity.MLAgents;
 
 public class EnvironmentManager : MonoBehaviour
 {
-    // ML-Agents Group Management
     private SimpleMultiAgentGroup m_AgentGroup;
+    private bool episodeActive = true;
+    private float episodeStartTime;
 
-    [Header("Environment Settings")]
+    [Header("References")]
     [SerializeField]
     private Transform target;
+    public Transform Target => target;
 
     [SerializeField]
-    private Collider area; // Spawn alaný sýnýrlarý için
+    private Collider area;
+    private Bounds areaBounds;
 
     [SerializeField]
-    private GameObject roomParent; // Odalarýn parent objesi
+    private GameObject roomParent;
+    public List<Room> Rooms { get; private set; }
+
+    public Room SelectedRoom { get; private set; }
 
     [SerializeField]
-    private LayerMask obstacleLayer; // Engel tespiti için layer
+    private LayerMask obstacleLayer;
 
-    [Header("Agents")]
     [SerializeField]
     private List<PathfinderAgentV3> agents;
 
-    // Internal State
-    private Bounds areaBounds;
-    private const int MAX_SPAWN_ATTEMPTS = 100;
+    [Header("Episode Settings")]
+    [SerializeField]
+    private float maxEpisodeDuration = 30f; // Maksimum episode süresi
 
-    // Public Properties
+    // Public properties for access
     public Collider Area => area;
     public LayerMask ObstacleLayer => obstacleLayer;
-    public Transform Target => target;
-    public List<Room> Rooms { get; private set; }
-    public Room SelectedRoom { get; private set; }
+    public bool EpisodeActive => episodeActive;
 
     private void Awake()
     {
         m_AgentGroup = new SimpleMultiAgentGroup();
 
-        // Initialize Bounds
         if (area != null)
         {
             areaBounds = area.bounds;
         }
         else
         {
-            Debug.LogError("EnvironmentManager: 'Area' collider is not assigned!");
+            Debug.LogError("Area is not assigned in EnvironmentManager!");
         }
 
-        // Initialize Rooms
         if (roomParent != null)
         {
             Rooms = roomParent.GetComponentsInChildren<Room>().ToList();
@@ -58,80 +59,130 @@ public class EnvironmentManager : MonoBehaviour
         else
         {
             Rooms = new List<Room>();
-            Debug.LogWarning("EnvironmentManager: 'RoomParent' is not assigned!");
+            Debug.LogError("RoomParent is not assigned in EnvironmentManager!");
         }
-
-        InitializeRooms();
     }
 
     private void Start()
     {
-        RegisterAgents();
-        ResetScene();
-    }
-
-    private void RegisterAgents()
-    {
-        if (agents == null || agents.Count == 0) return;
+        if (agents == null || agents.Count == 0)
+        {
+            Debug.LogError("No agents assigned to EnvironmentManager!");
+            return;
+        }
 
         foreach (var agent in agents)
         {
             if (agent != null)
             {
                 m_AgentGroup.RegisterAgent(agent);
+                Debug.Log($"Registered agent: {agent.name}");
             }
+        }
+
+        ResetScene();
+    }
+
+    private void Update()
+    {
+        // Episode süresi kontrolü
+        if (episodeActive && Time.time - episodeStartTime > maxEpisodeDuration)
+        {
+            Debug.Log($"Episode timeout after {maxEpisodeDuration} seconds");
+            EndEpisodeWithPenalty(-0.5f, "Timeout");
         }
     }
 
     public void ResetScene()
     {
+        episodeActive = true;
+        episodeStartTime = Time.time;
+
+        // Her reset'te bounds'ý güncelle
+        if (area != null)
+        {
+            areaBounds = area.bounds;
+        }
+
         InitializeRooms();
-        SelectRandomRoom();
+        SelectRoom();
         SetTargetRandomPosition();
 
-        // Reset all agents
-        if (agents != null)
+        foreach (var agent in agents)
         {
-            foreach (var agent in agents)
+            if (agent != null)
             {
-                if (agent != null)
-                {
-                    agent.OnGroupEpisodeBegin();
-                }
+                agent.OnGroupEpisodeBegin();
             }
         }
+
+        Debug.Log("Scene reset complete.");
     }
 
     public void NotifyTargetFound(PathfinderAgentV3 agent)
     {
-        if (m_AgentGroup != null)
-        {
-            // Reward the group and end the episode
-            m_AgentGroup.AddGroupReward(agent.reachTargetReward);
-            m_AgentGroup.EndGroupEpisode();
-        }
-        ResetScene();
+        if (!episodeActive) return;
+
+        Debug.Log($"Target found by {agent.name}");
+        episodeActive = false;
+        m_AgentGroup.AddGroupReward(agent.reachTargetReward);
+        Debug.Log($"Group reward added: {agent.reachTargetReward}");
+        m_AgentGroup.EndGroupEpisode();
+        Invoke("ResetScene", 0.1f);
+    }
+
+    public void NotifyWallHit(PathfinderAgentV3 agent)
+    {
+        if (!episodeActive) return;
+
+        Debug.Log($"{agent.name} hit a wall! Resetting scene...");
+        episodeActive = false;
+        m_AgentGroup.AddGroupReward(agent.hitWallPenalty);
+        Debug.Log($"Group penalty added: {agent.hitWallPenalty}");
+        m_AgentGroup.EndGroupEpisode();
+        Invoke("ResetScene", 0.1f);
+    }
+
+    public void NotifyStuckInWall(PathfinderAgentV3 agent)
+    {
+        if (!episodeActive) return;
+
+        Debug.Log($"{agent.name} is stuck in wall! Resetting scene...");
+        episodeActive = false;
+        float stuckPenalty = agent.hitWallPenalty * 0.5f;
+        m_AgentGroup.AddGroupReward(stuckPenalty);
+        Debug.Log($"Stuck penalty added: {stuckPenalty}");
+        m_AgentGroup.EndGroupEpisode();
+        Invoke("ResetScene", 0.1f);
+    }
+
+    private void EndEpisodeWithPenalty(float penalty, string reason)
+    {
+        if (!episodeActive) return;
+
+        Debug.Log($"Ending episode: {reason}");
+        episodeActive = false;
+        m_AgentGroup.AddGroupReward(penalty);
+        m_AgentGroup.EndGroupEpisode();
+        Invoke("ResetScene", 0.1f);
     }
 
     public void NotifyNewRoomExplored(PathfinderAgentV3 agent)
     {
-        if (m_AgentGroup != null)
-        {
-            m_AgentGroup.AddGroupReward(agent.discoverNewRoomReward);
-        }
+        if (!episodeActive) return;
+
+        m_AgentGroup.AddGroupReward(agent.discoverNewRoomReward);
     }
 
-    private void InitializeRooms()
+    public void InitializeRooms()
     {
-        if (Rooms == null) return;
-
         foreach (var room in Rooms)
         {
             room.Initialize();
         }
     }
 
-    private void SelectRandomRoom()
+    public void SelectRoom()
     {
         if (Rooms != null && Rooms.Count > 0)
         {
@@ -139,99 +190,60 @@ public class EnvironmentManager : MonoBehaviour
         }
     }
 
-    private void SetTargetRandomPosition()
+    public void SetTargetRandomPosition()
     {
-        if (SelectedRoom == null || target == null) return;
-
-        Vector3 roomCenter = SelectedRoom.transform.localPosition;
-        // Ufak bir random offset ile hedefin yerini deðiþtiriyoruz
-        Vector3 randomOffset = new Vector3(Random.Range(-1f, 1f), 0.5f, Random.Range(-1f, 1f));
-        target.localPosition = roomCenter + randomOffset;
+        if (SelectedRoom != null && target != null)
+        {
+            Vector3 roomCenter = SelectedRoom.transform.position;
+            Vector3 randomPosition = roomCenter + new Vector3(Random.Range(-1f, 1f), 0.5f, Random.Range(-1f, 1f));
+            target.position = randomPosition;
+        }
     }
 
-    /// <summary>
-    /// Finds a safe random position for an agent within the area bounds.
-    /// </summary>
     public Vector3 GetRandomAgentPosition()
     {
         if (area == null)
         {
-            Debug.LogError("Area is not assigned in EnvironmentManager!");
+            Debug.LogError("Area is null in GetRandomAgentPosition!");
             return Vector3.zero;
         }
 
-        // Refresh bounds in case the object moved
         areaBounds = area.bounds;
 
         Vector3 randomSpawnPos;
-        int attempts = 0;
+        int maxAttempts = 100;
 
-        while (attempts < MAX_SPAWN_ATTEMPTS)
+        for (int attempts = 0; attempts < maxAttempts; attempts++)
         {
-            attempts++;
+            // Duvarlardan uzak, alanýn iç kýsmýnda spawn noktasý
+            float padding = 2f;
+            float randomX = Random.Range(areaBounds.min.x + padding, areaBounds.max.x - padding);
+            float randomZ = Random.Range(areaBounds.min.z + padding, areaBounds.max.z - padding);
 
-            float randomX = Random.Range(areaBounds.min.x, areaBounds.max.x);
-            float randomZ = Random.Range(areaBounds.min.z, areaBounds.max.z);
+            randomSpawnPos = new Vector3(randomX, areaBounds.center.y + 1f, randomZ);
 
-            // Y ekseni için area'nýn üst noktasýný baz alýyoruz + 1f yükseklik
-            randomSpawnPos = new Vector3(randomX, areaBounds.center.y, randomZ);
-
-            // Check collision with obstacles (radius 0.5f)
-            if (!Physics.CheckSphere(randomSpawnPos, 0.5f, obstacleLayer))
+            // Geniþ bir alanda engel kontrolü
+            if (!Physics.CheckSphere(randomSpawnPos, 1.5f, obstacleLayer))
             {
                 return randomSpawnPos;
             }
         }
 
-        Debug.LogWarning($"Could not find valid spawn position after {MAX_SPAWN_ATTEMPTS} attempts. Using Center.");
-        return areaBounds.center + Vector3.up;
+        return areaBounds.center + Vector3.up * 2f;
     }
 
     public Quaternion GetRandomAgentRotation()
     {
-        return Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+        return Quaternion.Euler(0f, Random.Range(0, 360), 0f);
     }
 
-    #region Debugging Tools
-
-    [ContextMenu("Print Spawn Info")]
-    public void PrintSpawnInfo()
+    [ContextMenu("Test Spawn Positions")]
+    public void TestSpawnPositions()
     {
-        if (area == null)
-        {
-            Debug.LogError("Area is not assigned!");
-            return;
-        }
-
-        Debug.Log($"Area: {area.name} | Center: {area.bounds.center} | Size: {area.bounds.size}");
-
         for (int i = 0; i < 3; i++)
         {
             Vector3 pos = GetRandomAgentPosition();
-            bool isObstructed = Physics.CheckSphere(pos, 0.5f, obstacleLayer);
-            Debug.Log($"Sample Spawn {i}: {pos} | Obstructed: {isObstructed}");
+            Debug.Log($"Test Spawn {i}: {pos}");
         }
     }
-
-    private void OnDrawGizmos()
-    {
-        if (area != null)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireCube(area.bounds.center, area.bounds.size);
-        }
-
-        if (Application.isPlaying && agents != null)
-        {
-            Gizmos.color = Color.red;
-            foreach (var agent in agents)
-            {
-                if (agent != null)
-                {
-                    Gizmos.DrawSphere(agent.transform.position, 0.5f);
-                }
-            }
-        }
-    }
-    #endregion
 }

@@ -3861,7 +3861,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   envManager: {fileID: 1956620238}
-  drawGizmos: 1
+  drawGizmos: 0
 --- !u!1001 &1993322680
 PrefabInstance:
   m_ObjectHideFlags: 0

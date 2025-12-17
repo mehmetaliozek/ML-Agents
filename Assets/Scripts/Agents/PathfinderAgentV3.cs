@@ -18,104 +18,120 @@ public class PathfinderAgentV3 : Agent
 
     [Header("Rewards")]
     public float reachTargetReward = 1.0f;
-    public float hitWallPenalty = -1.0f;
-
-    [Tooltip("Adým baþýna zaman cezasý. MaxStep'e bölünür.")]
-    public float stepPenalty = -1.0f;
-    [Tooltip("Hedef odasýndayken hedefe yaklaþma ödülü. MaxStep'e bölünür.")]
-    public float approachReward = 1.0f;
-
-    [Tooltip("Doðru odayý ilk kez bulma ödülü.")]
+    public float hitWallPenalty = -0.5f; // Azaltýlmýþ ceza
+    public float stepPenalty = -0.001f;
+    public float approachReward = 0.1f;
     public float foundCorrectRoomReward = 0.5f;
-    [Tooltip("Daha önce ziyaret edilen yanlýþ odaya girme cezasý.")]
     public float revisitWrongRoomPenalty = -0.2f;
-    [Tooltip("Yeni (ama yanlýþ) bir odayý ilk kez keþfetme ödülü.")]
     public float discoverNewRoomReward = 0.1f;
-    [Tooltip("duvarda sürünmeye devam ettikçe vereceðimiz ceza")]
-    public float wallStayPenalty = -0.01f;
+    public float wallStayPenalty = -0.1f; // Artýrýlmýþ ceza
+
+    [Header("Stuck Detection")]
+    [SerializeField]
+    private float stuckTimeThreshold = 2f;
+    [SerializeField]
+    private float stuckDistanceThreshold = 0.3f;
 
     private Rigidbody agentRb;
-    //private bool isTargetRoomFound; //artýk bulunduðunda EnvironmentManager'a bildiriyoruz, böylece multi-agent senaryosunda diðer ajanlar da ödül alabilir
     private bool isInRoom = false;
-    //private bool isRevisited = false; // Room.cs içindeki IsVisited'dan okuduðumuz için gerekli olmayabilir
     private Room visitedRoom;
+    private Vector3 lastValidPosition;
+    private float timeAtCurrentPosition = 0f;
+    private float timeInWallContact = 0f;
+    private bool isInWallContact = false;
+    private bool hasHitWall = false;
 
     public override void Initialize()
     {
         agentRb = GetComponent<Rigidbody>();
+        agentRb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        lastValidPosition = transform.position;
+
+        if (EnvironmentManager == null)
+        {
+            Debug.LogError("EnvironmentManager is not assigned!");
+        }
     }
 
     public override void OnEpisodeBegin()
     {
-        //Episode iþlemleri bizim kontrolümüzde olsun, ml agentsdan çýkaralým diye sildim artýk Manager çaðýracak, OnGroupEpisodeBegin bak
-
-        //EnvironmentManager.InitializeRooms();
-        //EnvironmentManager.SelectRoom();
-        //EnvironmentManager.SetTargetRandomPosition();
-
-        //agentRb.linearVelocity = Vector3.zero;
-        //agentRb.angularVelocity = Vector3.zero;
-
-        //transform.SetLocalPositionAndRotation(EnvironmentManager.GetRandomAgentPosition(), EnvironmentManager.GetRandomAgentRotation());
-
-        //isTargetRoomFound = false;
-        //isInRoom = false;
-        //isRevisited = false;
-        //visitedRoom = null;
+        // ML-Agents episode baþlangýcý - EnvironmentManager kontrol ediyor
     }
 
     public void OnGroupEpisodeBegin()
     {
-        // Debug log ekleyin
-        Debug.Log($"{gameObject.name} - OnGroupEpisodeBegin called");
+        hasHitWall = false;
 
-        // Fiziksel hareketi sýfýrla
-        agentRb.linearVelocity = Vector3.zero;
-        agentRb.angularVelocity = Vector3.zero;
+        if (agentRb != null)
+        {
+            agentRb.linearVelocity = Vector3.zero;
+            agentRb.angularVelocity = Vector3.zero;
+            agentRb.rotation = Quaternion.identity;
+        }
 
-        // Pozisyon ve rotasyonu ayarla
-        Vector3 newPosition = EnvironmentManager.GetRandomAgentPosition();
-        Quaternion newRotation = EnvironmentManager.GetRandomAgentRotation();
+        if (EnvironmentManager != null)
+        {
+            Vector3 newPosition = EnvironmentManager.GetRandomAgentPosition();
+            Quaternion newRotation = EnvironmentManager.GetRandomAgentRotation();
 
-        Debug.Log($"{gameObject.name} moving to position: {newPosition}");
+            transform.position = newPosition;
+            transform.rotation = newRotation;
 
-        // Doðrudan transform.position kullanýn
-        transform.position = newPosition;
-        transform.rotation = newRotation;
+            if (agentRb != null)
+            {
+                agentRb.position = newPosition;
+                agentRb.rotation = newRotation;
+            }
 
-        // Eðer Rigidbody'de interpolation kullanýyorsanýz, pozisyonu da ona göre ayarlayýn
-        agentRb.position = newPosition;
-        agentRb.rotation = newRotation;
+            lastValidPosition = newPosition;
+        }
 
-        // Durumlarý sýfýrla
         isInRoom = false;
         visitedRoom = null;
-
-        Debug.Log($"{gameObject.name} new position: {transform.position}");
+        timeAtCurrentPosition = 0f;
+        timeInWallContact = 0f;
+        isInWallContact = false;
     }
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        sensor.AddObservation(transform.InverseTransformDirection(agentRb.linearVelocity));
-        sensor.AddObservation(agentRb.angularVelocity.y);
-
-        //sensor.AddObservation(isTargetRoomFound);
-        //sensor.AddObservation(isRevisited);
+        if (agentRb != null)
+        {
+            sensor.AddObservation(transform.InverseTransformDirection(agentRb.linearVelocity));
+            sensor.AddObservation(agentRb.angularVelocity.y);
+        }
+        else
+        {
+            sensor.AddObservation(Vector3.zero);
+            sensor.AddObservation(0f);
+        }
 
         sensor.AddObservation(isInRoom);
 
         if (visitedRoom != null)
         {
-            sensor.AddObservation(visitedRoom.IsVisited);
+            sensor.AddObservation(visitedRoom.IsVisited ? 1f : 0f);
         }
         else
         {
-            sensor.AddObservation(false);
+            sensor.AddObservation(0f);
+        }
+
+        if (EnvironmentManager != null && EnvironmentManager.Target != null)
+        {
+            float distanceToTarget = Vector3.Distance(transform.position, EnvironmentManager.Target.position);
+            sensor.AddObservation(distanceToTarget);
+        }
+        else
+        {
+            sensor.AddObservation(0f);
         }
     }
 
     public override void OnActionReceived(ActionBuffers actions)
     {
+        if (agentRb == null || hasHitWall) return;
+
         float moveInput = Mathf.Clamp(actions.ContinuousActions[0], 0, 1f);
         float rotateInput = actions.ContinuousActions[1];
 
@@ -125,7 +141,58 @@ public class PathfinderAgentV3 : Agent
         Vector3 rotation = agentRotateSpeed * rotateInput * Vector3.up;
         agentRb.angularVelocity = rotation;
 
-        AddReward(stepPenalty / MaxStep);
+        AddReward(stepPenalty);
+
+        CheckIfStuck();
+
+        if (EnvironmentManager != null && EnvironmentManager.Target != null)
+        {
+            float distanceToTarget = Vector3.Distance(transform.position, EnvironmentManager.Target.position);
+            if (distanceToTarget < 5f)
+            {
+                AddReward(approachReward * Time.fixedDeltaTime * (5f - distanceToTarget) / 5f);
+            }
+        }
+    }
+
+    private void CheckIfStuck()
+    {
+        if (hasHitWall) return;
+
+        float distanceMoved = Vector3.Distance(transform.position, lastValidPosition);
+
+        if (distanceMoved > stuckDistanceThreshold)
+        {
+            lastValidPosition = transform.position;
+            timeAtCurrentPosition = 0f;
+        }
+        else
+        {
+            timeAtCurrentPosition += Time.fixedDeltaTime;
+
+            if (timeAtCurrentPosition > stuckTimeThreshold)
+            {
+                Debug.Log($"{gameObject.name} is stuck at position: {transform.position}");
+                if (EnvironmentManager != null)
+                {
+                    EnvironmentManager.NotifyStuckInWall(this);
+                }
+            }
+        }
+
+        if (isInWallContact)
+        {
+            timeInWallContact += Time.fixedDeltaTime;
+
+            if (timeInWallContact > 1f) // 1 saniyeden fazla duvardaysa
+            {
+                Debug.Log($"{gameObject.name} stuck in wall for {timeInWallContact:F1} seconds");
+                if (EnvironmentManager != null)
+                {
+                    EnvironmentManager.NotifyStuckInWall(this);
+                }
+            }
+        }
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -150,43 +217,73 @@ public class PathfinderAgentV3 : Agent
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag(Tags.Target))
+        if (hasHitWall) return;
+
+        if (collision.gameObject.CompareTag("Target"))
         {
-            //AddReward(reachTargetReward);
-            //EndEpisode();
-            //Ödüller artýk environment manager tarafýndan veriliyor
-
-            EnvironmentManager.NotifyTargetFound(this);
-
+            Debug.Log($"{gameObject.name} collided with target!");
+            if (EnvironmentManager != null)
+            {
+                EnvironmentManager.NotifyTargetFound(this);
+            }
         }
-        else if (collision.gameObject.CompareTag(Tags.Wall))
+        else if (collision.gameObject.CompareTag("Wall"))
         {
-            AddReward(hitWallPenalty);
-            //EndEpisode();
-            //direkt bitirmek yerine öyle kaldýklarýnda ceza verelim sürünmesinler duvarlarda diye
+            Debug.Log($"{gameObject.name} hit a wall at position: {transform.position}");
+            hasHitWall = true;
+
+            // Bireysel ceza (isteðe baðlý, grup cezasý da var)
+            AddReward(hitWallPenalty * 0.5f);
+
+            if (EnvironmentManager != null)
+            {
+                EnvironmentManager.NotifyWallHit(this);
+            }
         }
     }
 
     private void OnCollisionStay(Collision collision)
     {
-        if(collision.gameObject.CompareTag(Tags.Wall))
+        if (hasHitWall) return;
+
+        if (collision.gameObject.CompareTag("Wall"))
         {
-            AddReward(wallStayPenalty);
+            isInWallContact = true;
+            AddReward(wallStayPenalty * Time.fixedDeltaTime);
+
+            // Duvardan uzaklaþtýrmak için küçük bir itme kuvveti
+            if (collision.contacts.Length > 0)
+            {
+                Vector3 pushDirection = (transform.position - collision.contacts[0].point).normalized;
+                agentRb.AddForce(pushDirection * 3f, ForceMode.VelocityChange);
+            }
+        }
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Wall"))
+        {
+            isInWallContact = false;
+            timeInWallContact = 0f;
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag(Tags.Room) || other.gameObject.CompareTag(Tags.Visited))
+        if (hasHitWall) return;
+
+        if (other.gameObject.CompareTag("Room") || other.gameObject.CompareTag("Visited"))
         {
             if (other.TryGetComponent(out Room room))
             {
                 isInRoom = true;
                 visitedRoom = room;
 
-                if (room == EnvironmentManager.SelectedRoom)
+                if (EnvironmentManager != null && room == EnvironmentManager.SelectedRoom)
                 {
-                    AddReward(discoverNewRoomReward * 2);
+                    AddReward(foundCorrectRoomReward);
+                    Debug.Log($"{gameObject.name} found correct room: {room.name}");
                 }
                 else
                 {
@@ -197,8 +294,12 @@ public class PathfinderAgentV3 : Agent
                     else
                     {
                         room.MarkAsVisited();
-                        EnvironmentManager.NotifyNewRoomExplored(this);
+                        if (EnvironmentManager != null)
+                        {
+                            EnvironmentManager.NotifyNewRoomExplored(this);
+                        }
                         AddReward(discoverNewRoomReward);
+                        Debug.Log($"{gameObject.name} discovered new room: {room.name}");
                     }
                 }
             }
@@ -207,19 +308,23 @@ public class PathfinderAgentV3 : Agent
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.gameObject.CompareTag(Tags.Room) || other.gameObject.CompareTag(Tags.Visited))
+        if (other.gameObject.CompareTag("Room") || other.gameObject.CompareTag("Visited"))
         {
             Room room = other.GetComponent<Room>();
             if (room == visitedRoom)
             {
                 isInRoom = false;
                 visitedRoom = null;
-
-                if (room != EnvironmentManager.SelectedRoom)
-                {
-                    room.MarkAsVisited();
-                }
             }
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if (!hasHitWall && isInWallContact)
+        {
+            // Duvarda sýkýþmýþsa küçük bir zýplama kuvveti
+            agentRb.AddForce(Vector3.up * 2f, ForceMode.Acceleration);
         }
     }
 }
