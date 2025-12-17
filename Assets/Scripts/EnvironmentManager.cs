@@ -13,8 +13,11 @@ public class EnvironmentManager : MonoBehaviour
     [SerializeField]
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     private Collider area;
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
     private Collider area;  // Bu satýrý ekleyin
@@ -32,12 +35,18 @@ public class EnvironmentManager : MonoBehaviour
     public Room SelectedRoom { get; private set; }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     private Bounds areaBounds;
     private const int MAX_SPAWN_ATTEMPTS = 100;
 
     [SerializeField] 
     private List<PathfinderAgentV3> agents; //ajanlarý multiAgent grubuna eklemek için editörden atama yapcaz
 =======
+=======
+    [SerializeField]
+    private LayerMask obstacleLayer;  // Bu satýrý ekleyin
+
+>>>>>>> Stashed changes
 =======
     [SerializeField]
     private LayerMask obstacleLayer;  // Bu satýrý ekleyin
@@ -50,6 +59,9 @@ public class EnvironmentManager : MonoBehaviour
     public Collider Area => area;
     public LayerMask ObstacleLayer => obstacleLayer;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -60,11 +72,14 @@ public class EnvironmentManager : MonoBehaviour
 
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         areaBounds = area.bounds;
         Rooms = roomParent.GetComponentsInChildren<Room>().ToList();
             
         InitializeRooms();
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
         if (area != null)
@@ -81,6 +96,9 @@ public class EnvironmentManager : MonoBehaviour
             Rooms = new List<Room>();
         }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -150,10 +168,13 @@ public class EnvironmentManager : MonoBehaviour
     {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         InitializeRooms();
         SelectRandomRoom();
         SetTargetRandomPosition();
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
         if (Rooms != null && Rooms.Count > 0)
@@ -161,6 +182,9 @@ public class EnvironmentManager : MonoBehaviour
             SelectedRoom = Rooms[Random.Range(0, Rooms.Count)];
         }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -170,9 +194,12 @@ public class EnvironmentManager : MonoBehaviour
     {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         if (Rooms.Count == 0) return;
         SelectedRoom = Rooms[Random.Range(0, Rooms.Count)];
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
         if (Rooms != null)
@@ -184,6 +211,9 @@ public class EnvironmentManager : MonoBehaviour
             }
         }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -191,6 +221,7 @@ public class EnvironmentManager : MonoBehaviour
 
     public void SetTargetRandomPosition()
     {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
         if (SelectedRoom == null) return;
@@ -201,6 +232,8 @@ public class EnvironmentManager : MonoBehaviour
 =======
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
         if (SelectedRoom != null && target != null)
         {
             Vector3 roomCenter = SelectedRoom.transform.localPosition;
@@ -208,6 +241,9 @@ public class EnvironmentManager : MonoBehaviour
             target.localPosition = randomPosition;
         }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -215,6 +251,7 @@ public class EnvironmentManager : MonoBehaviour
 
     public Vector3 GetRandomAgentPosition()
     {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
         Vector3 randomSpawnPos;
@@ -243,6 +280,14 @@ public class EnvironmentManager : MonoBehaviour
             return Vector3.zero;
         }
 
+=======
+        if (area == null)
+        {
+            Debug.LogError("Area is not assigned in EnvironmentManager!");
+            return Vector3.zero;
+        }
+
+>>>>>>> Stashed changes
 =======
         if (area == null)
         {
@@ -280,6 +325,9 @@ public class EnvironmentManager : MonoBehaviour
         Debug.LogError($"Could not find valid spawn position after {maxAttempts} attempts");
         return areaBounds.center + Vector3.up * 2f;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -288,6 +336,54 @@ public class EnvironmentManager : MonoBehaviour
     public Quaternion GetRandomAgentRotation()
     {
         return Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+    }
+
+    // Debug için Inspector'dan çaðrýlacak metod
+    [ContextMenu("Print Spawn Info")]
+    public void PrintSpawnInfo()
+    {
+        if (area == null)
+        {
+            Debug.LogError("Area is not assigned!");
+            return;
+        }
+
+        Debug.Log($"Area: {area.name}");
+        Debug.Log($"Bounds Center: {area.bounds.center}");
+        Debug.Log($"Bounds Size: {area.bounds.size}");
+
+        for (int i = 0; i < 3; i++)
+        {
+            Vector3 pos = GetRandomAgentPosition();
+            Debug.Log($"Spawn Position {i}: {pos}");
+
+            bool isObstructed = Physics.CheckSphere(pos, 0.5f, obstacleLayer);
+            Debug.Log($"  Is obstructed: {isObstructed}");
+        }
+    }
+
+    // Debug için Gizmos çizimi
+    private void OnDrawGizmos()
+    {
+        if (area != null)
+        {
+            Bounds bounds = area.bounds;
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireCube(bounds.center, bounds.size);
+
+            // Mevcut ajan pozisyonlarýný göster
+            if (Application.isPlaying && agents != null)
+            {
+                Gizmos.color = Color.red;
+                foreach (var agent in agents)
+                {
+                    if (agent != null)
+                    {
+                        Gizmos.DrawSphere(agent.transform.position, 0.5f);
+                    }
+                }
+            }
+        }
     }
 
     // Debug için Inspector'dan çaðrýlacak metod
