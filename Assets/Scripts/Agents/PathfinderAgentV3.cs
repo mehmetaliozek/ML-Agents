@@ -66,14 +66,32 @@ public class PathfinderAgentV3 : Agent
 
     public void OnGroupEpisodeBegin()
     {
+        // Debug log ekleyin
+        Debug.Log($"{gameObject.name} - OnGroupEpisodeBegin called");
+
+        // Fiziksel hareketi sýfýrla
         agentRb.linearVelocity = Vector3.zero;
         agentRb.angularVelocity = Vector3.zero;
 
-        transform.SetLocalPositionAndRotation(EnvironmentManager.GetRandomAgentPosition(), EnvironmentManager.GetRandomAgentRotation());
+        // Pozisyon ve rotasyonu ayarla
+        Vector3 newPosition = EnvironmentManager.GetRandomAgentPosition();
+        Quaternion newRotation = EnvironmentManager.GetRandomAgentRotation();
 
+        Debug.Log($"{gameObject.name} moving to position: {newPosition}");
+
+        // Doðrudan transform.position kullanýn
+        transform.position = newPosition;
+        transform.rotation = newRotation;
+
+        // Eðer Rigidbody'de interpolation kullanýyorsanýz, pozisyonu da ona göre ayarlayýn
+        agentRb.position = newPosition;
+        agentRb.rotation = newRotation;
+
+        // Durumlarý sýfýrla
         isInRoom = false;
         visitedRoom = null;
 
+        Debug.Log($"{gameObject.name} new position: {transform.position}");
     }
 
     public override void CollectObservations(VectorSensor sensor)

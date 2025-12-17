@@ -1,0 +1,29 @@
+{
+    "PathfinderAgent": {
+        "checkpoints": [
+            {
+                "steps": 6384,
+                "file_path": "results\\Yavuz_Group_001\\PathfinderAgent\\PathfinderAgent-6384.onnx",
+                "reward": -101.97998237609863,
+                "creation_time": 1765065506.474249,
+                "auxillary_file_paths": [
+                    "results\\Yavuz_Group_001\\PathfinderAgent\\PathfinderAgent-6384.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 6384,
+            "file_path": "results\\Yavuz_Group_001\\PathfinderAgent.onnx",
+            "reward": -101.97998237609863,
+            "creation_time": 1765065506.474249,
+            "auxillary_file_paths": [
+                "results\\Yavuz_Group_001\\PathfinderAgent\\PathfinderAgent-6384.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.7.1+cpu"
+    }
+}
