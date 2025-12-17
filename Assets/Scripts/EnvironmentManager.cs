@@ -12,8 +12,11 @@ public class EnvironmentManager : MonoBehaviour
     private Transform target;
     [SerializeField]
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     private Collider area;
 =======
+=======
+>>>>>>> Stashed changes
     private Collider area;  // Bu satýrý ekleyin
     private Bounds areaBounds;
 
@@ -28,18 +31,27 @@ public class EnvironmentManager : MonoBehaviour
     public List<Room> Rooms { get; private set; }
     public Room SelectedRoom { get; private set; }
 
+<<<<<<< Updated upstream
     private Bounds areaBounds;
     private const int MAX_SPAWN_ATTEMPTS = 100;
 
     [SerializeField] 
     private List<PathfinderAgentV3> agents; //ajanlarý multiAgent grubuna eklemek için editörden atama yapcaz
 =======
+=======
+    [SerializeField]
+    private LayerMask obstacleLayer;  // Bu satýrý ekleyin
+
+>>>>>>> Stashed changes
     [SerializeField]
     private List<PathfinderAgentV3> agents;
 
     // Public properties for external access
     public Collider Area => area;
     public LayerMask ObstacleLayer => obstacleLayer;
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
     private void Awake()
@@ -47,11 +59,14 @@ public class EnvironmentManager : MonoBehaviour
         m_AgentGroup = new SimpleMultiAgentGroup();
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         areaBounds = area.bounds;
         Rooms = roomParent.GetComponentsInChildren<Room>().ToList();
             
         InitializeRooms();
 =======
+=======
+>>>>>>> Stashed changes
         if (area != null)
         {
             areaBounds = area.bounds;
@@ -65,6 +80,9 @@ public class EnvironmentManager : MonoBehaviour
         {
             Rooms = new List<Room>();
         }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     }
 
@@ -131,23 +149,32 @@ public class EnvironmentManager : MonoBehaviour
     public void ResetEnvironment()
     {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         InitializeRooms();
         SelectRandomRoom();
         SetTargetRandomPosition();
 =======
+=======
+>>>>>>> Stashed changes
         if (Rooms != null && Rooms.Count > 0)
         {
             SelectedRoom = Rooms[Random.Range(0, Rooms.Count)];
         }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     }
 
     public void SelectRandomRoom()
     {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         if (Rooms.Count == 0) return;
         SelectedRoom = Rooms[Random.Range(0, Rooms.Count)];
 =======
+=======
+>>>>>>> Stashed changes
         if (Rooms != null)
         {
             var nearbyRooms = Rooms.Where(r => Vector3.Distance(r.transform.localPosition, center) <= radius).ToList();
@@ -156,11 +183,15 @@ public class EnvironmentManager : MonoBehaviour
                 SelectedRoom = nearbyRooms[Random.Range(0, nearbyRooms.Count)];
             }
         }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     }
 
     public void SetTargetRandomPosition()
     {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
         if (SelectedRoom == null) return;
 
@@ -168,17 +199,23 @@ public class EnvironmentManager : MonoBehaviour
         Vector3 randomOffset = new Vector3(Random.Range(-1f, 1f), 0.5f, Random.Range(-1f, 1f));
         target.localPosition = roomCenter + randomOffset;
 =======
+=======
+>>>>>>> Stashed changes
         if (SelectedRoom != null && target != null)
         {
             Vector3 roomCenter = SelectedRoom.transform.localPosition;
             Vector3 randomPosition = roomCenter + new Vector3(Random.Range(-1f, 1f), 0.5f, Random.Range(-1f, 1f));
             target.localPosition = randomPosition;
         }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     }
 
     public Vector3 GetRandomAgentPosition()
     {
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
         Vector3 randomSpawnPos;
         int attempts = 0;
@@ -206,6 +243,14 @@ public class EnvironmentManager : MonoBehaviour
             return Vector3.zero;
         }
 
+=======
+        if (area == null)
+        {
+            Debug.LogError("Area is not assigned in EnvironmentManager!");
+            return Vector3.zero;
+        }
+
+>>>>>>> Stashed changes
         // Bounds'ý her seferinde güncelle
         areaBounds = area.bounds;
 
@@ -234,12 +279,63 @@ public class EnvironmentManager : MonoBehaviour
 
         Debug.LogError($"Could not find valid spawn position after {maxAttempts} attempts");
         return areaBounds.center + Vector3.up * 2f;
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     }
 
     public Quaternion GetRandomAgentRotation()
     {
         return Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+    }
+
+    // Debug için Inspector'dan çaðrýlacak metod
+    [ContextMenu("Print Spawn Info")]
+    public void PrintSpawnInfo()
+    {
+        if (area == null)
+        {
+            Debug.LogError("Area is not assigned!");
+            return;
+        }
+
+        Debug.Log($"Area: {area.name}");
+        Debug.Log($"Bounds Center: {area.bounds.center}");
+        Debug.Log($"Bounds Size: {area.bounds.size}");
+
+        for (int i = 0; i < 3; i++)
+        {
+            Vector3 pos = GetRandomAgentPosition();
+            Debug.Log($"Spawn Position {i}: {pos}");
+
+            bool isObstructed = Physics.CheckSphere(pos, 0.5f, obstacleLayer);
+            Debug.Log($"  Is obstructed: {isObstructed}");
+        }
+    }
+
+    // Debug için Gizmos çizimi
+    private void OnDrawGizmos()
+    {
+        if (area != null)
+        {
+            Bounds bounds = area.bounds;
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireCube(bounds.center, bounds.size);
+
+            // Mevcut ajan pozisyonlarýný göster
+            if (Application.isPlaying && agents != null)
+            {
+                Gizmos.color = Color.red;
+                foreach (var agent in agents)
+                {
+                    if (agent != null)
+                    {
+                        Gizmos.DrawSphere(agent.transform.position, 0.5f);
+                    }
+                }
+            }
+        }
     }
 
     // Debug için Inspector'dan çaðrýlacak metod
