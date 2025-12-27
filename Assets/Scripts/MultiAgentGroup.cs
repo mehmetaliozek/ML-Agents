@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.MLAgents;
 using UnityEngine;
@@ -32,6 +33,8 @@ public class MultiAgentGroup : MonoBehaviour
     {
         _mlAgentGroup.EndGroupEpisode();
         ResetGroupEpisode();
+        LevelManager.Instance.LoadLevel(-1);
+        LevelManager.Instance.SetGroupAlpha(1f);
     }
 
     public void AddGroupReward(float reward)
