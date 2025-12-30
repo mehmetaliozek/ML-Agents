@@ -24,14 +24,6 @@ behaviors:
           normalize: true
           hidden_units: 256
           num_layers: 3
-      curiosity:
-        gamma: 0.99
-        strength: 0.1
-        learning_rate: 0.0003
-        network_settings:
-          normalize: true
-          hidden_units: 128
-          num_layers: 2
-    max_steps: 5000000
+    max_steps: 17000000
     time_horizon: 128
     summary_freq: 10000

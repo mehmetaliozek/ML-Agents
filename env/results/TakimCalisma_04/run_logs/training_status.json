@@ -1,0 +1,65 @@
+{
+    "PathfinderAgent": {
+        "checkpoints": [
+            {
+                "steps": 15499885,
+                "file_path": "results\\TakimCalisma_04\\PathfinderAgent\\PathfinderAgent-15499885.onnx",
+                "reward": 2.2000217591412365,
+                "creation_time": 1767048849.6074736,
+                "auxillary_file_paths": [
+                    "results\\TakimCalisma_04\\PathfinderAgent\\PathfinderAgent-15499885.pt"
+                ]
+            },
+            {
+                "steps": 15999999,
+                "file_path": "results\\TakimCalisma_04\\PathfinderAgent\\PathfinderAgent-15999999.onnx",
+                "reward": 1.4995123328020175,
+                "creation_time": 1767049635.1962779,
+                "auxillary_file_paths": [
+                    "results\\TakimCalisma_04\\PathfinderAgent\\PathfinderAgent-15999999.pt"
+                ]
+            },
+            {
+                "steps": 16499978,
+                "file_path": "results\\TakimCalisma_04\\PathfinderAgent\\PathfinderAgent-16499978.onnx",
+                "reward": 2.417416552081704,
+                "creation_time": 1767050417.304956,
+                "auxillary_file_paths": [
+                    "results\\TakimCalisma_04\\PathfinderAgent\\PathfinderAgent-16499978.pt"
+                ]
+            },
+            {
+                "steps": 16999960,
+                "file_path": "results\\TakimCalisma_04\\PathfinderAgent\\PathfinderAgent-16999960.onnx",
+                "reward": 2.1333332432227,
+                "creation_time": 1767051202.6141949,
+                "auxillary_file_paths": [
+                    "results\\TakimCalisma_04\\PathfinderAgent\\PathfinderAgent-16999960.pt"
+                ]
+            },
+            {
+                "steps": 17000088,
+                "file_path": "results\\TakimCalisma_04\\PathfinderAgent\\PathfinderAgent-17000088.onnx",
+                "reward": 2.1333332432227,
+                "creation_time": 1767051202.6891263,
+                "auxillary_file_paths": [
+                    "results\\TakimCalisma_04\\PathfinderAgent\\PathfinderAgent-17000088.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 17000088,
+            "file_path": "results\\TakimCalisma_04\\PathfinderAgent.onnx",
+            "reward": 2.1333332432227,
+            "creation_time": 1767051202.6891263,
+            "auxillary_file_paths": [
+                "results\\TakimCalisma_04\\PathfinderAgent\\PathfinderAgent-17000088.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.7.1+cpu"
+    }
+}
